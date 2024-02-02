@@ -1,0 +1,103 @@
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+
+
+sudo mv /tmp/eksctl /usr/local/bin
+
+eksctl version
+
+https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#
+
+sudo apt update
+sudo apt install unzip
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+
+
+scp -i "cpdevopsew-eu-west-2.pem" -r ~/.aws/ ubuntu@ec2-18-130-84-166.eu-west-2.compute.amazonaws.com:~/
+
+eksctl create cluster --region eu-west-2 --node-type t2.small --nodes 1 --nodes-min 1 --nodes-max 1 --name chads-demo-cluster
+
+export KUBECONFIG=$HOME/kubeconfigs/NAME.yml
+
+
+ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/darwin/amd64/kubectl
+
+chmod +x ./kubectl
+
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+
+nano nginx-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment-dojo
+  labels:
+    app: ng-dep-dojo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ng-pod
+  template:
+    metadata:
+      labels:
+        app: ng-pod
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+
+nano nginx-service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service-dojo
+spec:
+  type: LoadBalancer
+  selector:
+    app: ng-pod
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+
+#####now just by changing the image name in the deployment file, we can change the image that is deployed to the cluster
+
+nano nginx-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment-dojo
+  labels:
+    app: ng-dep-dojo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ng-pod
+  template:
+    metadata:
+      labels:
+        app: ng-pod
+    spec:
+      containers:
+        - name: nginx
+          image: tsmith4014/dojo-app 
+          ports:
+            - containerPort: 80
+
+ubuntu@ip-10-0-3-74:~$ kubectl apply -f . 
+deployment.apps/nginx-deployment-dojo configured
+service/nginx-service-dojo unchanged
+
+
+#now the image has been updated to the new image and it will render to the cluster
